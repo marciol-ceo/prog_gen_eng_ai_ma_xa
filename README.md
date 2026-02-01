@@ -93,16 +93,15 @@ Génère et renvoie le fichier .tex pour téléchargement.
 ## 📂 Structure des fichiers
 
 .
-├── main.py                    # Point d'entrée principal de l'API FastAPI
-├── runtime.txt                # Spécification de la version Python
-├── requirements.txt           # Liste des dépendances Python
-├── .env                       # Variables de configuration (clés API)
-├── temp_latex/                # Dossier temporaire pour les fichiers générés
-├── maxa_supabase_ops.py       # Fonctions de gestion Supabase
-├── maxa_extr_gen_epreuve.py   # Logique métier de génération et d'upload
-└── extrat_info_pdf.py         # Intégration de l'OCR Mathpix
+├── main.py                    # Point d'entrée principal de l'API FastAPI <br>
+├── runtime.txt                # Spécification de la version Python <br>
+├── requirements.txt           # Liste des dépendances Python <br>
+├── temp_latex/                # Dossier temporaire pour les fichiers générés <br>
+├── maxa_supabase_ops.py       # Fonctions de gestion Supabase <br>
+├── maxa_extr_gen_epreuve.py   # Logique métier de génération et d'upload <br>
+└── extrat_info_pdf.py         # Intégration de l'OCR Mathpix <br>
 
 
 ⚖️ Licence
 
-Ce projet est la propriété de [Votre Organisation/Nom]. Toute utilisation ou reproduction non autorisée est strictement interdite.
+Ce projet est la propriété de [maxa]. Toute utilisation ou reproduction non autorisée est strictement interdite.
