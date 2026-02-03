@@ -406,7 +406,7 @@ Créer un NOUVEL exercice TOTALEMENT DIFFÉRENT, de niveau "{str(level_indicatio
 **CE QUE TU DOIS CHANGER RADICALEMENT :**
 1. ❌ AUCUNE reformulation : l'exercice doit être entièrement nouveau
 2. ❌ PAS les mêmes objets "{str(level_indication[0])}" :
-   - si l'original utilise $\ln(x)$, utiliser une autre fonction
+   - si l'original utilise ln(x), utiliser une autre fonction
    - si l'original traite une suite, préférer une fonction, une intégrale ou une équation
 3. ❌ PAS le même contexte "{str(level_indication[0])}"
 4. ❌ PAS la même structure de questions : changer l'ordre, la progression logique et les types de raisonnements
@@ -415,7 +415,7 @@ Créer un NOUVEL exercice TOTALEMENT DIFFÉRENT, de niveau "{str(level_indicatio
 ---
 
 **EXEMPLES DE TRANSFORMATION CRÉATIVE (ADAPTÉS AU NIVEAU "{str(level_indication[1])}") :**
-f"{ ' -'.join(indication_exemple) }"
+f"{{ ' -'.join(indication_exemple) }}"
 
 ---
 
@@ -428,20 +428,79 @@ f"{ ' -'.join(indication_exemple) }"
 
 ---
 
-**FORMAT DE SORTIE OBLIGATOIRE :**
-- Titre : "{cle_exo.replace('exercice', 'Exercice')}"
-- Code LaTeX irréprochable pour toutes les expressions "{str(level_indication[0])}"
-- Énoncé clair, précis et professionnel
-- utilise \displaystyle pour les expressions mathématiques 
-- Une question par ligne (comme dans l'exercice de référence)
-- Numérotation cohérente : 1., 2., (a), (b), etc.
+**FORMAT LATEX STRICT - RESPECTE EXACTEMENT :**
 
-**ELEMENT A EVITER :**
-- les * ou ** pour mettre en gras des parties de l'énoncé
-- les symboles de mise en forme LaTeX non standardisés (comme \textbf ou \emph)
-- les element du markdow qui ne sont pas valide en latex surtout ca 
-- le contenu de la section commence sur la meme ligne que le titre
+1. **Titre de l'exercice** (une seule ligne):
+   {cle_exo.replace('exercice', 'Exercice')}
 
+2. **Paragraphe introductif** (optionnel, 1-3 lignes):
+   Texte normal sans balises spéciales.
+   Formules mathématiques inline : $expression$
+   Formules mathématiques display : \[expression\]
+
+3. **Questions principales** (numérotation obligatoire):
+   1. Première question avec formules inline $x^2$ ou display \[\int_0^1 f(x)\,dx\]
+   2. Deuxième question...
+   3. Troisième question...
+
+4. **Sous-questions** (sous une question principale):
+   a) Première sous-question
+   b) Deuxième sous-question
+
+**RÈGLES LATEX ABSOLUES (AUCUNE EXCEPTION) :**
+
+✅ AUTORISÉ:
+- Formules inline: $f(x) = x^2$, $\ln(x)$, $e^x$
+- Formules display: \[\int_0^1 f(x)\,dx\]
+- Systèmes: \[\begin{{cases}} x + y = 1 \\ x - y = 0 \end{{cases}}\]
+- Fractions: $\frac{{a}}{{b}}$ ou \[\frac{{a}}{{b}}\]
+- Dérivées: $f'(x)$, $\frac{{df}}{{dx}}$
+- Intégrales: $\int_a^b f(x)\,dx$, $\displaystyle\int_a^b$
+- Symboles: $\in$, $\subset$, $\forall$, $\exists$, $\to$, $\mathbb{{R}}$, $\mathbb{{N}}$, $\mathbb{{C}}$
+- Indices/Exposants: $x_n$, $a^2$, $u_{{n+1}}$
+- Racines: $\sqrt{{x}}$, $\sqrt[n]{{x}}$
+- Limites: $\lim_{{x \to 0}}$, $\displaystyle\lim_{{n \to +\infty}}$
+
+❌ STRICTEMENT INTERDIT:
+- Markdown: *, **, _, ~~, #, ##, ###
+- Gras/Italique LaTeX: \textbf{{}}, \textit{{}}, \emph{{}}, \bf, \it
+- Mise en forme: \underline{{}}, \section{{}}, \subsection{{}}, \title{{}}
+- Espacements manuels: \vspace{{}}, \hspace{{}}, \newline, \\\\
+- Balises HTML: <b>, <i>, <u>, <strong>
+- Caractères spéciaux non échappés: &, %, $, #, _, {{, }}
+- Formules sans délimiteurs: écrire x^2 au lieu de $x^2$
+- Double backslash en fin de ligne normale (sauf dans cases ou tableaux)
+
+**FORMAT DES FORMULES:**
+- Formules courtes (< 5 caractères): inline $x$, $f(x)$, $a+b$
+- Formules moyennes: inline $\int_0^1 f(x)\,dx$
+- Formules longues ou importantes: display \[\int_0^1 f(x)\,dx = \frac{{1}}{{2}}\]
+- Systèmes d'équations: TOUJOURS en display avec cases:
+  \[\begin{{cases}}
+  x + y = 1 \\
+  x - y = 0
+  \end{{cases}}\]
+
+**STRUCTURE EXACTE ATTENDUE:**
+
+Exercice 1
+
+Soit f la fonction définie sur $\mathbb{{R}}$ par $f(x) = x^2 - 3x + 2$.
+
+1. Déterminer les racines de f et dresser le tableau de variations.
+2. Calculer l'aire sous la courbe entre les deux racines:
+\[A = \int_{{x_1}}^{{x_2}} f(x)\,dx\]
+3. Étudier la fonction composée $g = f \circ f$.
+   a) Montrer que g est paire.
+   b) Calculer $g'(0)$.
+
+**VALIDATION FINALE:**
+- Chaque question commence par "1. ", "2. ", "3. "
+- Chaque sous-question commence par "a) ", "b) ", "c) "
+- Toutes les formules sont entre $...$ ou \[...\]
+- Aucun caractère markdown (*, **, #)
+- Aucune commande LaTeX de mise en forme (\textbf, \textit, etc.)
+- Le titre n'a PAS de contenu sur la même ligne
 
 ---
 
@@ -451,10 +510,11 @@ Un étudiant de niveau "{str(level_indication[1])}" ne doit PAS penser :
 mais plutôt :
 "voici un nouvel exercice exigeant et intelligemment conçu".
 
+Le LaTeX généré doit compiler SANS AUCUNE ERREUR dans l'app mobile.
+
 ---
 
-GÉNÈRE MAINTENANT L'EXERCICE  
-(UNIQUEMENT L'ÉNONCÉ, AUCUNE SOLUTION).
+GÉNÈRE MAINTENANT L'EXERCICE (UNIQUEMENT L'ÉNONCÉ, AUCUNE SOLUTION).
 """
 
         try:
