@@ -382,10 +382,8 @@ def generer_exercices_innovants(
         
         texte_exercice = "\n".join(contenu_original)
         
-        # ============================================
-        # PROMPT ORIGINAL (NON MODIFIÉ)
-        # ============================================
-        prompt = f"""Tu es un concepteur d'exercices "{str(level_indication[0])}" créatif et rigoureux, spécialisé dans la conception de sujets de niveau  "{str(level_indication[1])}", dans l'esprit des concours d'ingénieurs.
+ 
+        prompt = rf"""Tu es un concepteur d'exercices "{str(level_indication[0])}" créatif et rigoureux, spécialisé dans la conception de sujets de niveau  "{str(level_indication[1])}", dans l'esprit des concours d'ingénieurs.
 
 EXERCICE DE RÉFÉRENCE (POUR INSPIRATION UNIQUEMENT) :
 {texte_exercice}
