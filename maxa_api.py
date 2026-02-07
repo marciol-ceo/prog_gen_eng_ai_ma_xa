@@ -48,11 +48,11 @@ class GenerationRequest(BaseModel):
         "suite définie par récurrence": "fonction définie par une équation fonctionnelle",
         "fonction exponentielle": "fonction trigonométrique ou rationnelle"
     }
-    titre_document: str = "Devoir Surveillé"
-    sous_titre: Optional[str] = "Durée: 2h - Calculatrice autorisée"
+    titre_document: str = "Concours blanc"
+    sous_titre: Optional[str] = "Durée: 3h - Calculatrice autorisée"
     generer_latex: bool = True
-    logo_gauche: Optional[str] = 'logo_lycee.png'
-    logo_droit: Optional[str] = 'logo_academie.png'
+    logo_gauche: Optional[str] = 'icon_app.png'
+    logo_droit: Optional[str] = None
 
 class SaveLatexRequest(BaseModel):
     content: dict
