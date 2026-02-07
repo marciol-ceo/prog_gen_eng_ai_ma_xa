@@ -704,19 +704,15 @@ def _generer_document_latex(
 """
     
     # En-tête UNIQUEMENT pour la première page
-    if logo_gauche or logo_droit or texte_entete:
+    if texte_entete:
         preambule += r"""    \fancyhead[L]{"""
-        if logo_gauche:
-            preambule += rf"\includegraphics[height=1.5cm]{{{logo_gauche}}}"
+        # Remplacer le logo par du texte "MAXA Gen Engine"
+        preambule += r"\textbf{\large MAXA Gen Engine}"
         preambule += r"""}
     \fancyhead[C]{"""
-        if texte_entete:
-            preambule += rf"\textbf{{{texte_entete}}}"
+        preambule += rf"\textbf{{{texte_entete}}}"
         preambule += r"""}
-    \fancyhead[R]{"""
-        if logo_droit:
-            preambule += rf"\includegraphics[height=1.5cm]{{{logo_droit}}}"
-        preambule += r"""}
+    \fancyhead[R]{}
 """
     
     preambule += r"""    \fancyfoot[C]{\thepage}

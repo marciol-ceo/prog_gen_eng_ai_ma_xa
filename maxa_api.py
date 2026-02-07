@@ -51,7 +51,7 @@ class GenerationRequest(BaseModel):
     titre_document: str = "Concours blanc"
     sous_titre: Optional[str] = "Durée: 3h - Calculatrice autorisée"
     generer_latex: bool = True
-    logo_gauche: Optional[str] = 'icon_app.png'
+    logo_gauche: Optional[str] = None
     logo_droit: Optional[str] = None
 
 class SaveLatexRequest(BaseModel):
