@@ -68,7 +68,11 @@ f"{{ ' -'.join(indication_exemple) }}"
 ✅ AUTORISÉ:
 - Formules inline: $f(x) = x^2$, $\ln(x)$, $e^x$
 - Formules display: \[\int_0^1 f(x)\,dx\]
-- Systèmes: \[\begin{{cases}} x + y = 1 \\ x - y = 0 \end{{cases}}\]
+- Systèmes d'équations: \[\begin{{cases}} x + y = 1 \\ x - y = 0 \end{{cases}}\]
+- Matrices avec parenthèses: \[\begin{{pmatrix}} a & b \\ c & d \end{{pmatrix}}\]
+- Matrices avec crochets: \[\begin{{bmatrix}} 1 & 2 \\ 3 & 4 \end{{bmatrix}}\]
+- Déterminants: \[\begin{{vmatrix}} a & b \\ c & d \end{{vmatrix}}\]
+- Vecteurs: \[\begin{{pmatrix}} x \\ y \\ z \end{{pmatrix}}\] ou $\vec{{u}} = (x, y, z)$
 - Fractions: $\frac{{a}}{{b}}$ ou \[\frac{{a}}{{b}}\]
 - Dérivées: $f'(x)$, $\frac{{df}}{{dx}}$
 - Intégrales: $\int_a^b f(x)\,dx$, $\displaystyle\int_a^b$
@@ -91,14 +95,54 @@ f"{{ ' -'.join(indication_exemple) }}"
 - Formules courtes (< 5 caractères): inline $x$, $f(x)$, $a+b$
 - Formules moyennes: inline $\int_0^1 f(x)\,dx$
 - Formules longues ou importantes: display \[\int_0^1 f(x)\,dx = \frac{{1}}{{2}}\]
-- Systèmes d'équations: TOUJOURS en display avec cases:
-  \[\begin{{cases}}
-  x + y = 1 \\
-  x - y = 0
-  \end{{cases}}\]
 
-**STRUCTURE EXACTE ATTENDUE:**
+**SYSTÈMES D'ÉQUATIONS - FORMAT OBLIGATOIRE:**
+TOUJOURS utiliser display mode avec cases. Séparer les équations avec \\\\
+Exemple correct:
+\[\begin{{cases}}
+x + y = 1 \\
+x - y = 0 \\
+2x + 3y = 5
+\end{{cases}}\]
 
+**MATRICES - FORMAT OBLIGATOIRE:**
+TOUJOURS en display mode. Utiliser & pour séparer les colonnes, \\\\ pour les lignes.
+- Matrices avec parenthèses (pmatrix):
+\[\begin{{pmatrix}}
+1 & 2 & 3 \\
+4 & 5 & 6 \\
+7 & 8 & 9
+\end{{pmatrix}}\]
+
+- Matrices avec crochets (bmatrix):
+\[A = \begin{{bmatrix}}
+a_{{11}} & a_{{12}} \\
+a_{{21}} & a_{{22}}
+\end{{bmatrix}}\]
+
+- Déterminants (vmatrix):
+\[\det(A) = \begin{{vmatrix}}
+a & b \\
+c & d
+\end{{vmatrix}} = ad - bc\]
+
+- Vecteurs colonnes:
+\[\vec{{v}} = \begin{{pmatrix}}
+x \\
+y \\
+z
+\end{{pmatrix}}\]
+
+**IMPORTANT POUR MATRICES ET SYSTÈMES:**
+- Ne JAMAIS mettre de matrices ou systèmes en inline mode ($...$)
+- TOUJOURS utiliser display mode (\[...\])
+- Utiliser & pour aligner les colonnes
+- Utiliser \\\\ pour séparer les lignes (deux backslashes)
+- Bien fermer avec \end{{pmatrix}}, \end{{bmatrix}}, \end{{vmatrix}}, ou \end{{cases}}
+
+**EXEMPLES DE STRUCTURES CORRECTES:**
+
+Exemple 1 - Analyse:
 Exercice 1
 
 Soit f la fonction définie sur $\mathbb{{R}}$ par $f(x) = x^2 - 3x + 2$.
@@ -109,6 +153,30 @@ Soit f la fonction définie sur $\mathbb{{R}}$ par $f(x) = x^2 - 3x + 2$.
 3. Étudier la fonction composée $g = f \circ f$.
    a) Montrer que g est paire.
    b) Calculer $g'(0)$.
+
+Exemple 2 - Algèbre linéaire:
+Exercice 2
+
+Soit A la matrice définie par:
+\[A = \begin{{bmatrix}}
+1 & 2 & -1 \\
+0 & 3 & 2 \\
+-1 & 1 & 4
+\end{{bmatrix}}\]
+
+1. Calculer le déterminant de A:
+\[\det(A) = \begin{{vmatrix}}
+1 & 2 & -1 \\
+0 & 3 & 2 \\
+-1 & 1 & 4
+\end{{vmatrix}}\]
+2. Résoudre le système linéaire suivant:
+\[\begin{{cases}}
+x + 2y - z = 3 \\
+3y + 2z = 5 \\
+-x + y + 4z = 1
+\end{{cases}}\]
+3. Déterminer les valeurs propres de A.
 
 **VALIDATION FINALE:**
 - Chaque question commence par "1. ", "2. ", "3. "
