@@ -710,7 +710,10 @@ def _generer_document_latex(
         preambule += r"\textbf{\large MAXA Gen Engine}"
         preambule += r"""}
     \fancyhead[C]{"""
-        preambule += rf"\textbf{{{texte_entete}}}"
+        # Gérer les \\ dans le texte d'en-tête en utilisant une structure appropriée
+        # Remplacer \\ par \newline dans un environnement qui le supporte
+        texte_entete_clean = texte_entete.replace('\\\\', '\\newline ')
+        preambule += rf"\begin{{tabular}}{{c}}\textbf{{{texte_entete_clean}}}\end{{tabular}}"
         preambule += r"""}
     \fancyhead[R]{}
 """
