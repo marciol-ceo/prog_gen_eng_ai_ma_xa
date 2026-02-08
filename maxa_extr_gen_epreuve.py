@@ -465,6 +465,7 @@ f"{{ ' -'.join(indication_exemple) }}"
 - Matrices avec parenthèses: \[\begin{{pmatrix}} a & b \\ c & d \end{{pmatrix}}\]
 - Matrices avec crochets: \[\begin{{bmatrix}} 1 & 2 \\ 3 & 4 \end{{bmatrix}}\]
 - Déterminants: \[\begin{{vmatrix}} a & b \\ c & d \end{{vmatrix}}\]
+- Tableaux: \[\begin{{array}}{{|c|c|}} \hline x & y \\ \hline 1 & 2 \\ \hline \end{{array}}\]
 - Vecteurs colonnes: \[\begin{{pmatrix}} x \\ y \\ z \end{{pmatrix}}\]
 - Fractions: $\frac{{a}}{{b}}$ ou \[\frac{{a}}{{b}}\]
 - Dérivées: $f'(x)$, $\frac{{df}}{{dx}}$
@@ -525,6 +526,40 @@ x \\
 y \\
 z
 \end{{pmatrix}}\]
+
+**TABLEAUX - FORMAT OBLIGATOIRE:**
+Pour les tableaux de valeurs, tableaux de variations, tableaux de signes, utiliser array TOUJOURS en display mode.
+- Tableaux de valeurs:
+\[\begin{{array}}{{|c|c|c|}}
+\hline
+x & 0 & 1 & 2 \\
+\hline
+f(x) & 0 & 1 & 4 \\
+\hline
+\end{{array}}\]
+
+- Tableaux de variations (sans bordures):
+\[\begin{{array}}{{c|ccccc}}
+x & -\infty & & 0 & & +\infty \\
+\hline
+f'(x) & & - & 0 & + & \\
+\hline
+& & & 0 & & \\
+f(x) & & \searrow & & \nearrow & \\
+& +\infty & & & & +\infty
+\end{{array}}\]
+
+- Tableaux de signes:
+\[\begin{{array}}{{c|ccc}}
+x & -\infty & 2 & +\infty \\
+\hline
+f(x) & - & 0 & +
+\end{{array}}\]
+
+⚠️ IMPORTANT:
+- Utiliser \hline pour les lignes horizontales
+- Spécifier l'alignement: {{|c|c|}} pour colonnes centrées avec bordures, {{ccc}} sans bordures
+- Utiliser & pour séparer les colonnes, \\\\ pour les lignes
 
 **IMPORTANT POUR MATRICES ET SYSTÈMES:**
 - Ne JAMAIS mettre de matrices ou systèmes en inline mode ($...$)
