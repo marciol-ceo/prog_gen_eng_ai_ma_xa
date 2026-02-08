@@ -436,14 +436,25 @@ f"{{ ' -'.join(indication_exemple) }}"
    Formules mathématiques inline : $expression$
    Formules mathématiques display : \[expression\]
 
-3. **Questions principales** (numérotation obligatoire):
-   1. Première question avec formules inline $x^2$ ou display \[\int_0^1 f(x)\,dx\]
-   2. Deuxième question...
-   3. Troisième question...
+3. **Titres de sections et sous-titres** (IMPORTANT):
+   - TOUJOURS utiliser le format markdown **Titre** pour mettre en gras
+   - Exemples corrects:
+     * **Problème**
+     * **Partie A : Le noyau radioactif**
+     * **Première partie : Étude de la fonction**
+     * **Section 1 : Analyse préliminaire**
+   - NE JAMAIS utiliser \textbf{{}}, \emph{{}}, ou autres commandes LaTeX pour les titres
 
-4. **Sous-questions** (sous une question principale):
+4. **Questions principales** (numérotation SANS POINT):
+   1) Première question avec formules inline $x^2$ ou display \[\int_0^1 f(x)\,dx\]
+   2) Deuxième question...
+   3) Troisième question...
+   ⚠️ IMPORTANT: Utiliser "1)" et NON "1." (pas de point après le numéro)
+
+5. **Sous-questions** (SANS POINT):
    a) Première sous-question
    b) Deuxième sous-question
+   ⚠️ IMPORTANT: Utiliser "a)" et NON "a." (pas de point après la lettre)
 
 **RÈGLES LATEX ABSOLUES (AUCUNE EXCEPTION) :**
 
@@ -529,10 +540,10 @@ Exercice 1
 
 Soit f la fonction définie sur $\mathbb{{R}}$ par $f(x) = x^2 - 3x + 2$.
 
-1. Déterminer les racines de f et dresser le tableau de variations.
-2. Calculer l'aire sous la courbe entre les deux racines:
+1) Déterminer les racines de f et dresser le tableau de variations.
+2) Calculer l'aire sous la courbe entre les deux racines:
 \[A = \int_{{x_1}}^{{x_2}} f(x)\,dx\]
-3. Étudier la fonction composée $g = f \circ f$.
+3) Étudier la fonction composée $g = f \circ f$.
    a) Montrer que g est paire.
    b) Calculer $g'(0)$.
 
@@ -546,25 +557,26 @@ Soit A la matrice définie par:
 -1 & 1 & 4
 \end{{bmatrix}}\]
 
-1. Calculer le déterminant de A:
+1) Calculer le déterminant de A:
 \[\det(A) = \begin{{vmatrix}}
 1 & 2 & -1 \\
 0 & 3 & 2 \\
 -1 & 1 & 4
 \end{{vmatrix}}\]
-2. Résoudre le système linéaire suivant:
+2) Résoudre le système linéaire suivant:
 \[\begin{{cases}}
 x + 2y - z = 3 \\
 3y + 2z = 5 \\
 -x + y + 4z = 1
 \end{{cases}}\]
-3. Déterminer les valeurs propres de A.
+3) Déterminer les valeurs propres de A.
 
 **VALIDATION FINALE:**
-- Chaque question commence par "1. ", "2. ", "3. "
+- Chaque question commence par "1) ", "2) ", "3) " (AVEC PARENTHÈSE, SANS POINT)
 - Chaque sous-question commence par "a) ", "b) ", "c) "
 - Toutes les formules sont entre $...$ ou \[...\]
-- Aucun caractère markdown (*, **, #)
+- Utilise ** pour les titres et sous-titres de sections (**Partie A**, **Problème**, etc.)
+- Aucun caractère markdown ailleurs (pas de *, #, sauf pour les titres)
 - Aucune commande LaTeX de mise en forme (\textbf, \textit, etc.)
 - Le titre n'a PAS de contenu sur la même ligne
 
@@ -842,8 +854,8 @@ def _formater_exercice_latex(lignes: list) -> str:
             contenu += f"\\textbf{{{titre_clean}}}\n\n"
             continue
         
-        # Détecter une question principale (1., 2., 3., etc.)
-        match_question = re.match(r'^(\d+)\.\s*(.*)', ligne)
+        # Détecter une question principale (1), 2), 3), etc.)
+        match_question = re.match(r'^(\d+)\)\s*(.*)', ligne)
         if match_question:
             # Fermer sous-enumerate si ouvert
             if dans_sous_enumerate:
