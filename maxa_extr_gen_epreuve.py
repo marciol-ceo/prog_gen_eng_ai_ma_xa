@@ -102,13 +102,14 @@ def lire_fichier_sans_sections(chemin_fichier,
 
 
 
-def extraire_indices_sections(liste_lignes: list) -> list:
+
+def extraire_indices_sections(liste_lignes: list) :
     """
-    Extrait les indices des lignes contenant des marqueurs de section
-    (Exercice, Partie, Problème, etc.) via l'API Claude.
+    Extrait les titres des grandes sections de niveau 1 puis identifie leurs indices
+    dans la liste de lignes.
     
     Returns:
-        list: Liste des indices (int) des lignes de section
+        tuple: (liste des indices, nombre de tokens consommés)
     """
     import anthropic
     import json
@@ -116,54 +117,89 @@ def extraire_indices_sections(liste_lignes: list) -> list:
     
     client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
     
-    # Conversion de la liste en texte numéroté
     texte_numerote = "\n".join([f"{i}: {ligne}" for i, ligne in enumerate(liste_lignes)])
     
-    prompt = f"""Analyse ce document ligne par ligne et retourne UNIQUEMENT les indices (numéros) des lignes qui marquent le début d'une section.
+    # ÉTAPE 1 : Extraire les titres des sections niveau 1
+    prompt1 = f"""Analyse cette épreuve et retourne UNIQUEMENT les titres des sections PRINCIPALES de niveau 1.
 
-    CRITÈRES D'UNE LIGNE DE SECTION :
-    - Contient l'un de ces mots-clés : "Exercice", "Exo", "Partie", "Problème", "Problem", "Question", "Chapitre", "Section"
-    - Généralement courte (moins de 4 phrases)
-    - Souvent suivie d'un numéro (ex: "Exercice 1", "Partie A")
+RÈGLE ABSOLUE : 
+- Une section niveau 1 = UN EXERCICE ou UN PROBLÈME complet
+- Retourne le titre EXACTEMENT comme il apparaît (pas de reformulation)
 
-    DOCUMENT À ANALYSER :
-    {texte_numerote}
+✓ INCLURE (titres de sections niveau 1) :
+- "PROBLÈME" 
+- "Exercice 1"
+- "Exercice 2"
 
-    INSTRUCTIONS :
-    1. Identifie chaque ligne qui correspond aux critères ci-dessus
-    2. Retourne UNIQUEMENT un tableau JSON d'indices (nombres entiers)
-    3. Format attendu : [12, 45, 78, 156]
-    4. Ne retourne AUCUN texte explicatif, juste le JSON
+✗ EXCLURE (sous-parties) :
+- "Partie A", "Partie B"
+- "Question 1"
+- "1)", "2)", "a)", "b)"
 
-    Réponse :"""
+DOCUMENT :
+{texte_numerote}
+
+Retourne UNIQUEMENT un tableau JSON des titres EXACTS (format ["PROBLÈME", "Exercice 1"]) :"""
 
     try:
-        response = client.messages.create(
-            model="claude-opus-4-6",
-            max_tokens=1000,
-            temperature=0,  # Déterministe pour cohérence
-            messages=[{"role": "user", "content": prompt}]
+        response1 = client.messages.create(
+            model="claude-sonnet-4-20250514",
+            max_tokens=1500,
+            temperature=0,
+            messages=[{"role": "user", "content": prompt1}]
         )
         
-        # Extraction de la réponse
-        reponse_brute = response.content[0].text.strip()
+        tokens_total = response1.usage.input_tokens + response1.usage.output_tokens
         
-        # Nettoyage (enlever éventuels backticks markdown)
-        reponse_json = reponse_brute.replace("```json", "").replace("```", "").strip()
+        reponse_brute1 = response1.content[0].text.strip()
+        reponse_json1 = reponse_brute1.replace("```json", "").replace("```", "").strip()
         
-        # Parse du JSON
-        indices = json.loads(reponse_json)
+        debut_json = reponse_json1.find('[')
+        fin_json = reponse_json1.rfind(']') + 1
+        reponse_json1 = reponse_json1[debut_json:fin_json]
+        titres = json.loads(reponse_json1)
         
-        print(f"✅ {len(indices)} sections détectées : {indices}")
+        print(f"✅ {len(titres)} sections trouvées : {titres}")
+        
+        # ÉTAPE 2 : Trouver les indices de ces titres dans la liste
+        prompt2 = f"""Voici une liste de titres de sections et un document numéroté ligne par ligne.
+Pour CHAQUE titre, trouve l'indice (numéro de ligne) où il apparaît EXACTEMENT dans le document.
+
+TITRES À LOCALISER :
+{json.dumps(titres, ensure_ascii=False)}
+
+DOCUMENT NUMÉROTÉ :
+{texte_numerote}
+
+Retourne UNIQUEMENT un tableau JSON d'indices dans l'ordre des titres (format [5, 12, 45]) :"""
+
+        response2 = client.messages.create(
+            model="claude-sonnet-4-20250514",
+            max_tokens=4000,
+            temperature=0,
+            messages=[{"role": "user", "content": prompt2}]
+        )
+        
+        tokens_total += response2.usage.input_tokens + response2.usage.output_tokens
+        
+        reponse_brute2 = response2.content[0].text.strip()
+        reponse_json2 = reponse_brute2.replace("```json", "").replace("```", "").strip()
+        
+        debut_json = reponse_json2.rfind('[')
+        fin_json = reponse_json2.rfind(']') + 1
+        reponse_json2 = reponse_json2[debut_json:fin_json]
+        indices = json.loads(reponse_json2)
+        
+        print(f"✅ Indices trouvés : {indices}")
+        print(f"📊 Tokens totaux: {tokens_total}")
+        
         return indices
         
-    except json.JSONDecodeError as e:
-        print(f"❌ Erreur parsing JSON : {e}")
-        print(f"Réponse brute : {reponse_brute}")
-        return []
     except Exception as e:
         print(f"❌ Erreur : {e}")
         return []
+
+
 
 
 def extraire_exercices_complets(liste_lignes: list, indices_sections: list) -> dict:
@@ -972,6 +1008,7 @@ def upload_exercice_in_bucket(content_file :list ,
     upload_exercices(bucket=bucket,liste_exo_epreuve=liste_exo_epreuve)
     upload_exercices(bucket=bucket,liste_exo_epreuve=list_structure)
     return None
+
 
 
 
