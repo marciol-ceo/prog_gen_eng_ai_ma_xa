@@ -139,7 +139,7 @@ def extraire_indices_sections(liste_lignes: list) -> list:
 
     try:
         response = client.messages.create(
-            model="claude-sonnet-4-20250514",
+            model="claude-opus-4-6",
             max_tokens=1000,
             temperature=0,  # Déterministe pour cohérence
             messages=[{"role": "user", "content": prompt}]
@@ -292,7 +292,7 @@ Retourne UNIQUEMENT un JSON :
 Si un élément du template n'a pas de correspondance, mets null."""
 
     response = client.messages.create(
-        model="claude-sonnet-4-20250514",
+        model="claude-opus-4-6",
         max_tokens=1000,
         temperature=0,
         messages=[{"role": "user", "content": prompt}]
@@ -585,7 +585,7 @@ GÉNÈRE MAINTENANT L'EXERCICE (UNIQUEMENT L'ÉNONCÉ, AUCUNE SOLUTION).
 
         try:
             response = client.messages.create(
-                model="claude-sonnet-4-20250514",
+                model="claude-opus-4-6",
                 max_tokens=4000,
                 temperature=1.0,
                 messages=[{"role": "user", "content": prompt}]
