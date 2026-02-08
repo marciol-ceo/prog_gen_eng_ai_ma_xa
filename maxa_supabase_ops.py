@@ -398,6 +398,28 @@ def create_folder_if_not_exists(supabase, bucket: str, folder: str):
     return {"status": "created", "folder": folder}
 
 
+import unicodedata
+
+import re
+import unicodedata
+
+def clean_supabase_key(text: str) -> str:
+    """Nettoie une chaîne pour qu'elle soit une clé Supabase valide."""
+    # 1. Enlever les accents proprement
+    text = "".join(
+        c for c in unicodedata.normalize('NFD', text)
+        if unicodedata.category(c) != 'Mn'
+    )
+    # 2. Remplacer tout ce qui n'est pas lettre, chiffre ou underscore par '_'
+    text = re.sub(r'[^a-zA-Z0-9]', '_', text)
+    # 3. Supprimer les underscores multiples (ex: ___ -> _)
+    text = re.sub(r'_+', '_', text)
+    # 4. Enlever les underscores au début et à la fin
+    return text.strip('_').lower()
+
+
+
+
 def upload_exercices(bucket: str, liste_exo_epreuve: List[Dict]) -> List[Dict]:
     """
     Pour chaque dict de liste_exo_epreuve :
@@ -405,6 +427,7 @@ def upload_exercices(bucket: str, liste_exo_epreuve: List[Dict]) -> List[Dict]:
     - insère le contenu du dict dans un fichier JSON dans ce dossier
     - ajoute un timestamp (jour-heure-minute-seconde) au nom du fichier pour éviter les doublons
     """
+    
     import time
     supabase = _ensure_client()
     if not bucket_exists(supabase, bucket):
@@ -413,30 +436,42 @@ def upload_exercices(bucket: str, liste_exo_epreuve: List[Dict]) -> List[Dict]:
     results = []
     for idx, exo_dict in enumerate(liste_exo_epreuve, start=1):
         for key, value in exo_dict.items():
-            folder_name = key.strip().replace(" ", "_")  # normaliser le nom du dossier
+            
+            # NORMALISATION FORCÉE
+            # CRUCIAL : On nettoie la clé ici
+            folder_name = clean_supabase_key(key) 
+            
+            # Vérification visuelle dans ta console
+            print(f"Tentative upload vers : {folder_name}")
+
+            # Création du dossier virtuel
             create_folder_if_not_exists(supabase, bucket, folder_name)
 
-            # Générer un timestamp unique
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            time.sleep(1)  # pour éviter les collisions si très rapide
-            # nom du fichier : exoX_YYYYMMDD_HHMMSS.json
-            filename = f"{key.replace(' ', '_')}_{timestamp}.json"
-            path = f"{folder_name}/{filename}"
+            # Nettoyer aussi le nom du fichier pour être sûr
+            safe_filename = f"exo_{timestamp}.json"
+            path = f"{folder_name}/{safe_filename}"
 
             json_bytes = json.dumps(value, ensure_ascii=False, indent=2).encode("utf-8")
-            res = supabase.storage.from_(bucket).upload(path, json_bytes, {"content-type": "application/json"})
+            
+            res = supabase.storage.from_(bucket).upload(
+                path, 
+                json_bytes, 
+                {"content-type": "application/json"}
+            )
+            
             if isinstance(res, dict) and res.get("error"):
                 results.append({
                     "status": "error",
                     "folder": folder_name,
-                    "file": filename,
+                    "file": safe_filename,
                     "error": res.get("error")
                 })
             else:
                 results.append({
                     "status": "uploaded",
                     "folder": folder_name,
-                    "file": filename
+                    "file": safe_filename
                 })
     return results
 
