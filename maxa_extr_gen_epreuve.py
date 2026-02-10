@@ -140,7 +140,7 @@ def extraire_indices_sections(liste_lignes: list) -> list:
     try:
         response = client.messages.create(
             model="claude-opus-4-6",
-            max_tokens=1000,
+            max_tokens=10000,
             temperature=0,  # Déterministe pour cohérence
             messages=[{"role": "user", "content": prompt}]
         )
@@ -617,7 +617,7 @@ x + 2y - z = 3 \\
 
 ---
 
-**VÉRIFICATION MATHÉMATIQUE OBLIGATOIRE (TRÈS IMPORTANT) :**
+**VÉRIFICATION MATHÉMATIQUE OBLIGATOIRE (TRÈS IMPORTANT) SUPER SUPER SUPER IMPORTANT à FAIRE ABSOLUMENT :**
 Avant de soumettre l'exercice, tu DOIS vérifier systématiquement :
 1. **Cohérence des données numériques** : chaque valeur, chaque coefficient, chaque constante doit être vérifié
 2. **Véracité des égalités** : si tu écris une égalité (ex: $f(2) = 7$), VÉRIFIE en calculant toi-même que c'est VRAI
