@@ -617,6 +617,19 @@ x + 2y - z = 3 \\
 
 ---
 
+**VÉRIFICATION MATHÉMATIQUE OBLIGATOIRE (TRÈS IMPORTANT) :**
+Avant de soumettre l'exercice, tu DOIS vérifier systématiquement :
+1. **Cohérence des données numériques** : chaque valeur, chaque coefficient, chaque constante doit être vérifié
+2. **Véracité des égalités** : si tu écris une égalité (ex: $f(2) = 7$), VÉRIFIE en calculant toi-même que c'est VRAI
+3. **Cohérence des formules** : chaque formule mathématique doit être correcte et vérifiable
+4. **Faisabilité des questions** : chaque question doit avoir une solution qui existe réellement
+5. **Pas de contradictions** : les hypothèses ne doivent pas se contredire entre elles
+6. **Calculs intermédiaires** : si l'exercice implique des calculs (limites, dérivées, intégrales), vérifie que les résultats attendus sont corrects
+7. **Ne mets QUE ce qui est mathématiquement VRAI** : aucune approximation, aucune erreur de calcul
+8. **Auto-correction** : après avoir généré l'exercice, relis-le entièrement, résous-le mentalement, et si tu détectes la moindre erreur (calcul faux, formule incohérente, question impossible), CORRIGE l'exercice avant de le soumettre. Assure-toi que ta correction est elle-même correcte
+
+---
+
 **CRITÈRE DE SUCCÈS :**
 Un étudiant de niveau "{str(level_indication[1])}" ne doit PAS penser :
 "c'est juste l'exercice original reformulé",
@@ -624,6 +637,7 @@ mais plutôt :
 "voici un nouvel exercice exigeant et intelligemment conçu".
 
 Le LaTeX généré doit compiler SANS AUCUNE ERREUR dans l'app mobile.
+Toutes les données numériques et formules doivent être MATHÉMATIQUEMENT EXACTES.
 
 ---
 
