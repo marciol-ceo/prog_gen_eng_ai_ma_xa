@@ -8,8 +8,67 @@ from datetime import datetime
 load_dotenv()
 
 
-def lire_fichier_sans_sections(chemin_fichier, 
-                               motif_exclure="---SECTION---", 
+def _detecter_erreurs_simples(texte: str) -> list:
+    """
+    Détection rapide d'erreurs mathématiques évidentes.
+    Économe en tokens (pas d'API call).
+
+    Returns:
+        list: Liste des erreurs détectées (descriptions)
+    """
+    erreurs = []
+
+    # 1. Vérifier les égalités numériques simples (2+3=6 serait faux)
+    patterns_arithm = re.findall(r'\$(\d+)\s*([+\-*/])\s*(\d+)\s*=\s*(\d+)\$', texte)
+    for match in patterns_arithm:
+        a, op, b, resultat = match
+        try:
+            calcul_correct = eval(f"{a}{op}{b}")
+            resultat_donne = int(resultat)
+            if calcul_correct != resultat_donne:
+                erreurs.append(
+                    f"Calcul erroné: {a} {op} {b} = {resultat} (devrait être {calcul_correct})"
+                )
+        except:
+            pass
+
+    # 2. Vérifier les valeurs de fonction f(x) = ...
+    func_def = re.search(r'f\(x\)\s*=\s*([^$.]+)', texte)
+    if func_def:
+        definition = func_def.group(1).strip()
+
+        # Chercher les f(nombre) = nombre
+        func_vals = re.findall(r'f\((-?\d+)\)\s*=\s*(-?\d+)', texte)
+        for val in func_vals:
+            x_val, f_val = val
+            try:
+                # Essayer d'évaluer (seulement pour fonctions polynômiales simples)
+                if re.match(r'^[x\d\s+\-*/^()]+$', definition.replace('^', '**')):
+                    x = int(x_val)
+                    calcul = eval(definition.replace('^', '**').replace('x', str(x)))
+                    attendu = int(f_val)
+                    if calcul != attendu:
+                        erreurs.append(
+                            f"f({x_val}) = {f_val} est faux (devrait être {calcul})"
+                        )
+            except:
+                pass
+
+    # 3. Vérifier cohérence des paramètres (a = 2 puis a = 5)
+    parametres = {}
+    assignations = re.findall(r'([a-z])\s*=\s*(-?\d+)', texte)
+    for param, valeur in assignations:
+        if param in parametres and parametres[param] != valeur:
+            erreurs.append(
+                f"Incohérence paramètre '{param}': {parametres[param]} puis {valeur}"
+            )
+        parametres[param] = valeur
+
+    return erreurs
+
+
+def lire_fichier_sans_sections(chemin_fichier,
+                               motif_exclure="---SECTION---",
                                exclure_partiel=False,
                                ignorer_casse=False,
                                encodages=("utf-8", "latin-1", "cp1252")):
@@ -617,6 +676,55 @@ x + 2y - z = 3 \\
 
 ---
 
+**⚠️ ERREURS MATHÉMATIQUES FRÉQUENTES À ABSOLUMENT ÉVITER :**
+
+1. **❌ Erreurs de calcul numérique** :
+   - MAUVAIS: Écrire "f(2) = 7" sans calculer
+   - BON: Si f(x) = x² - 3x + 2, CALCULER: f(2) = 4 - 6 + 2 = 0 ✓
+
+2. **❌ Erreurs de dérivées** :
+   - MAUVAIS: "Dérivée de x³ est x²"
+   - BON: d/dx(x³) = 3x² ✓ (TOUJOURS vérifier)
+
+3. **❌ Erreurs d'intégrales** :
+   - MAUVAIS: ∫₀¹ x dx = 1
+   - BON: [x²/2]₀¹ = 1/2 - 0 = 1/2 ✓
+
+4. **❌ Erreurs de racines** :
+   - MAUVAIS: "x² - 5x + 6 = 0 a pour racines 1 et 6"
+   - BON: Factoriser (x-2)(x-3) = 0 → racines 2 et 3 ✓
+
+5. **❌ Incohérences paramétriques** :
+   - MAUVAIS: Utiliser "a = 3" puis plus loin "a = 5"
+   - BON: Garder paramètres cohérents partout ✓
+
+6. **❌ Égalités arithmétiques fausses** :
+   - MAUVAIS: Affirmer 2 + 3 = 6
+   - BON: TOUJOURS vérifier: 2 + 3 = 5 ✓
+
+**🔒 CONTRAINTES POUR MINIMISER LES ERREURS :**
+
+1. **Valeurs numériques** :
+   - ✅ PRIVILÉGIER: entiers de -10 à 10, fractions simples (1/2, 1/3, 2/3)
+   - ❌ ÉVITER: grands nombres (>100), fractions complexes (137/243)
+
+2. **Fonctions** :
+   - ✅ PRIVILÉGIER: polynômes simples, exp, ln avec coefficients simples
+   - ❌ ÉVITER: compositions trop complexes
+
+3. **Systématisation** :
+   - Si ax² + bx + c, utilise a,b,c ∈ {{-5,...,5}}
+   - Si racines demandées, assure Δ = b² - 4ac soit carré parfait
+
+**PROCÉDURE DE VÉRIFICATION AVANT SOUMISSION :**
+1. ✅ Relire CHAQUE égalité et CALCULER pour vérifier
+2. ✅ Pour CHAQUE dérivée/intégrale/limite, faire le calcul complet
+3. ✅ Vérifier cohérence des paramètres
+4. ✅ Résoudre mentalement pour vérifier qu'il y a une solution
+5. ✅ Si UNE SEULE erreur détectée → CORRIGER immédiatement
+
+---
+
 **VÉRIFICATION MATHÉMATIQUE OBLIGATOIRE (TRÈS IMPORTANT) SUPER SUPER SUPER IMPORTANT à FAIRE ABSOLUMENT :**
 Avant de soumettre l'exercice, tu DOIS vérifier systématiquement :
 1. **Cohérence des données numériques** : chaque valeur, chaque coefficient, chaque constante doit être vérifié
@@ -648,15 +756,61 @@ GÉNÈRE MAINTENANT L'EXERCICE (UNIQUEMENT L'ÉNONCÉ, AUCUNE SOLUTION).
             response = client.messages.create(
                 model="claude-opus-4-6",
                 max_tokens=4000,
-                temperature=1.0,
+                temperature=0.6,  # ✅ RÉDUIT de 1.0 à 0.6 pour moins d'erreurs mathématiques
                 messages=[{"role": "user", "content": prompt}]
             )
-            
+
             exercice_genere_brut = response.content[0].text.strip()
-            lignes_generees = exercice_genere_brut.split('\n')
-            
+
             total_tokens_input += response.usage.input_tokens
             total_tokens_output += response.usage.output_tokens
+
+            # ✅ VALIDATION MATHÉMATIQUE OBLIGATOIRE
+            print(f"   🔍 Vérification mathématique...")
+            erreurs = _detecter_erreurs_simples(exercice_genere_brut)
+
+            if erreurs:
+                print(f"   ⚠️  {len(erreurs)} erreur(s) détectée(s)")
+                for err in erreurs:
+                    print(f"      - {err}")
+                print(f"   🔄 Correction automatique...")
+
+                # Correction ciblée
+                correction_prompt = f"""L'exercice suivant contient des erreurs mathématiques.
+CORRIGE-LES en gardant le reste IDENTIQUE.
+
+EXERCICE:
+{exercice_genere_brut}
+
+ERREURS À CORRIGER:
+{chr(10).join([f"- {e}" for e in erreurs])}
+
+RÈGLES:
+1. Corrige UNIQUEMENT les erreurs listées
+2. Garde la structure, les questions, le contexte
+3. Assure-toi que les corrections sont EXACTES
+4. Ne change rien d'autre
+
+Réponds avec l'exercice CORRIGÉ complet (même format LaTeX).
+"""
+
+                correction_response = client.messages.create(
+                    model="claude-opus-4-6",
+                    max_tokens=4000,
+                    temperature=0.5,  # Plus bas pour précision
+                    messages=[{"role": "user", "content": correction_prompt}]
+                )
+
+                exercice_genere_brut = correction_response.content[0].text.strip()
+                total_tokens_input += correction_response.usage.input_tokens
+                total_tokens_output += correction_response.usage.output_tokens
+
+                print(f"   ✅ Exercice corrigé")
+                print(f"   📊 Tokens correction: {correction_response.usage.input_tokens} → {correction_response.usage.output_tokens}")
+            else:
+                print(f"   ✅ Aucune erreur détectée")
+
+            lignes_generees = exercice_genere_brut.split('\n')
             
             resultat = {
                 cle_exo: {
