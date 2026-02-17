@@ -71,9 +71,9 @@ def _extraire_exercice_pur(texte: str) -> str:
 
 def _verifier_mathematiques_ia(texte: str, client) -> list:
     """
-    Vérifie les erreurs mathématiques dans l'exercice via un modèle léger (Haiku).
+    Vérifie les erreurs mathématiques dans l'exercice via Sonnet 4.5.
     Plus efficace que le regex pour les nombres complexes, inégalités, géométrie, etc.
-    Coût très faible (~200-400 tokens output = quelques fractions de centime).
+    Coût faible (~200-400 tokens output, prix Sonnet).
 
     Returns:
         list: Liste d'erreurs détectées (strings), ou liste vide si aucune erreur.
@@ -101,7 +101,7 @@ NE DONNE PAS l'exercice corrigé. Seulement la liste des erreurs."""
 
     try:
         response = client.messages.create(
-            model="claude-3-5-haiku-20241022",  # Modèle léger = coût minimal
+            model="claude-sonnet-4-5-20250929",  # Sonnet 4.5 : meilleure précision mathématique
             max_tokens=600,
             temperature=0,  # Déterministe pour vérification
             messages=[{"role": "user", "content": verification_prompt}]
