@@ -1293,14 +1293,57 @@ def sauvegarder_latex(
 
 
 
+
+def renommer_cles_par_ordre(liste_exo_epreuve: list) -> list:
+    """
+    Renomme les clés du dictionnaire en fonction de l'ordre d'apparition.
+    'exercice' devient 'exercice_1', 'exercice_2', etc.
+    'problème' devient 'problème_1', 'problème_2', etc.
+    
+    Args:
+        liste_exo_epreuve: Liste contenant un dictionnaire avec les exercices
+        
+    Returns:
+        list: Liste avec le dictionnaire aux clés renommées
+    """
+    if not liste_exo_epreuve or not isinstance(liste_exo_epreuve[0], dict):
+        return liste_exo_epreuve
+    
+    ancien_dict = liste_exo_epreuve[0]
+    nouveau_dict = {}
+    
+    # Compteurs pour chaque type de section
+    compteurs = {}
+    
+    for ancienne_cle, contenu in ancien_dict.items():
+        # Extraire le premier mot de la clé (avant ':' ou espace)
+        premier_mot = ancienne_cle.split()[0].lower().rstrip(':')
+        
+        # Incrémenter le compteur pour ce type
+        if premier_mot not in compteurs:
+            compteurs[premier_mot] = 1
+        else:
+            compteurs[premier_mot] += 1
+        
+        # Créer la nouvelle clé
+        nouvelle_cle = f"{premier_mot}_{compteurs[premier_mot]}"
+        nouveau_dict[nouvelle_cle] = contenu
+    
+    print(f"✅ Clés renommées : {list(nouveau_dict.keys())}")
+    return [nouveau_dict]
+
+
 def upload_exercice_in_bucket(content_file :list ,
                               bucket: str ='issea-bucket'):
     ''' Upload des exercices extraits dans le bucket spécifié '''
     
+    
+    
     liste_exo_epreuve_indice = [pipeline_extraction_exercices(i.split('\n')) for i in content_file]
     liste_exo_epreuve = [x[0] for x in liste_exo_epreuve_indice]
     list_structure = [x[1] for x in liste_exo_epreuve_indice]
-
+    liste_exo_epreuve = renommer_cles_par_ordre(liste_exo_epreuve)
+    
     upload_exercices(bucket=bucket,liste_exo_epreuve=liste_exo_epreuve)
     upload_exercices(bucket=bucket,liste_exo_epreuve=list_structure)
     return None
