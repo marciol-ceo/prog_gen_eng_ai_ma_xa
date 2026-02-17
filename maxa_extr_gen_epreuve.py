@@ -8,6 +8,130 @@ from datetime import datetime
 load_dotenv()
 
 
+def _extraire_exercice_pur(texte: str) -> str:
+    """
+    Supprime les traces de raisonnement de l'IA (préambule/postambule).
+    Extrait uniquement le contenu de l'exercice, depuis le titre "Exercice N".
+    Appelé après chaque génération ou correction pour nettoyer l'output.
+    """
+    if not texte or not texte.strip():
+        return texte
+
+    lignes = texte.split('\n')
+
+    # ---- Trouver le vrai début de l'exercice ----
+    debut = 0
+    for i, ligne in enumerate(lignes):
+        l = ligne.strip()
+        # Le titre de l'exercice est le signal le plus fiable
+        if re.match(r'^exercice\s*\d*\s*$', l, re.IGNORECASE) or \
+           re.match(r'^exercice\s+\d+', l, re.IGNORECASE):
+            debut = i
+            break
+        # Début d'une section en gras (ex: **Partie A**)
+        if re.match(r'^\*\*(partie|problème|section|premier)', l, re.IGNORECASE):
+            debut = i
+            break
+        # Première ligne contenant du LaTeX mathématique
+        if re.search(r'\$|\\\[|\\\(|\\begin\{', l):
+            debut = i
+            break
+
+    lignes = lignes[debut:]
+
+    # ---- Supprimer le postambule IA à la fin ----
+    # Phrases qui indiquent du texte IA après l'exercice
+    mots_cles_ia = [
+        "après analyse", "après vérification", "j'ai vérifié",
+        "voici l'exercice corrigé", "voici la correction",
+        "correction effectuée", "cette version", "cette correction",
+        "note :", "note:", "remarque :", "remarque:",
+        "l'exercice est correct", "aucune erreur détectée",
+        "pas d'erreur", "l'exercice ne contient", "j'ai relu",
+        "en conclusion", "en résumé", "j'espère que",
+        "l'exercice tel qu'", "après avoir analysé",
+        "l'énoncé est cohérent", "les calculs sont corrects",
+        "je confirme", "bien sûr", "d'accord,",
+    ]
+
+    while lignes:
+        derniere = lignes[-1].strip().lower()
+        if not derniere:
+            lignes.pop()
+            continue
+        est_ia = any(derniere.startswith(m) or (m in derniere and len(derniere) < 150)
+                     for m in mots_cles_ia)
+        if est_ia:
+            lignes.pop()
+        else:
+            break
+
+    return '\n'.join(lignes).strip() or texte.strip()
+
+
+def _verifier_mathematiques_ia(texte: str, client) -> list:
+    """
+    Vérifie les erreurs mathématiques dans l'exercice via un modèle léger (Haiku).
+    Plus efficace que le regex pour les nombres complexes, inégalités, géométrie, etc.
+    Coût très faible (~200-400 tokens output = quelques fractions de centime).
+
+    Returns:
+        list: Liste d'erreurs détectées (strings), ou liste vide si aucune erreur.
+    """
+    verification_prompt = f"""Tu es un correcteur mathématique expert. Examine CET EXERCICE et détecte les erreurs mathématiques.
+
+EXERCICE:
+{texte}
+
+INSTRUCTIONS:
+- Vérifie CHAQUE égalité numérique (f(a) = b, calculs, produits, sommes)
+- Vérifie CHAQUE dérivée, intégrale, limite mentionnée
+- Vérifie CHAQUE affirmation géométrique (alignement, parallélisme, perpendicularité avec affixes complexes)
+- Vérifie CHAQUE inégalité et signe dans les tableaux de variation
+- Vérifie CHAQUE discriminant et chaque racine d'équation
+- Vérifie la cohérence des paramètres dans tout l'exercice
+- Si un exercice dit "montrer que A, B, C sont alignés" avec des affixes données, CALCULE (z_C - z_A)/(z_B - z_A) et vérifie que c'est réel
+- Si un exercice dit "droites parallèles" avec des affixes, CALCULE le rapport des vecteurs directeurs et vérifie qu'il est réel
+
+RÉPONDS UNIQUEMENT avec:
+- La ligne "AUCUNE_ERREUR" si tout est mathématiquement correct
+- OU une liste d'erreurs, une par ligne, format: "ERREUR: [description précise de l'erreur et de la valeur correcte]"
+
+NE DONNE PAS l'exercice corrigé. Seulement la liste des erreurs."""
+
+    try:
+        response = client.messages.create(
+            model="claude-3-5-haiku-20241022",  # Modèle léger = coût minimal
+            max_tokens=600,
+            temperature=0,  # Déterministe pour vérification
+            messages=[{"role": "user", "content": verification_prompt}]
+        )
+
+        contenu = response.content[0].text.strip()
+
+        if "AUCUNE_ERREUR" in contenu.upper() or not contenu:
+            return []
+
+        # Extraire les erreurs listées
+        erreurs = []
+        for ligne in contenu.split('\n'):
+            ligne = ligne.strip()
+            if ligne.upper().startswith("ERREUR:"):
+                erreur = ligne[7:].strip()  # Supprimer "ERREUR: "
+                if erreur:
+                    erreurs.append(f"[IA] {erreur}")
+            elif ligne and not ligne.upper().startswith("AUCUNE"):
+                # Ligne non vide qui semble être une erreur même sans le préfixe
+                if len(ligne) > 10 and not ligne.startswith('#'):
+                    erreurs.append(f"[IA] {ligne}")
+
+        return erreurs
+
+    except Exception as e:
+        print(f"   ⚠️  Vérification IA impossible: {e}")
+        return []  # En cas d'erreur, on continue sans bloquer
+
+
 def _detecter_erreurs_simples(texte: str) -> list:
     """
     Détection rapide d'erreurs mathématiques évidentes.
@@ -702,6 +826,30 @@ x + 2y - z = 3 \\
    - MAUVAIS: Affirmer 2 + 3 = 6
    - BON: TOUJOURS vérifier: 2 + 3 = 5 ✓
 
+7. **❌ Erreurs dans les exercices sur les NOMBRES COMPLEXES** :
+   - Si "montrer que A, B, C sont alignés avec affixes z_A, z_B, z_C" :
+     CALCULE (z_C - z_A)/(z_B - z_A) et VÉRIFIE que la partie imaginaire = 0
+     MAUVAIS: Choisir z_A=1+2i, z_B=3+i, z_C=2+3i sans vérifier l'alignement
+     BON: Choisir z_A=0, z_B=2+i, z_C=4+2i → rapport = (4+2i)/(2+i) = 2 ✓ (réel)
+   - Si "droite AB parallèle à droite CD" avec affixes :
+     CALCULE (z_B - z_A)/(z_D - z_C) et VÉRIFIE que c'est réel
+   - PROCÉDURE : Choisir les affixes EN FONCTION de la propriété voulue, pas l'inverse
+
+8. **❌ Erreurs dans les INÉGALITÉS** :
+   - MAUVAIS: Écrire "pour tout x > 0, f(x) < g(x)" sans vérifier
+   - BON: CALCULER f(x) - g(x) et étudier son signe analytiquement
+   - Si tableau de signe : VÉRIFIER chaque signe dans chaque intervalle
+   - MAUVAIS: Résolution d'inégalité avec sens incorrect
+   - BON: Faire le changement de sens si on multiplie par un négatif ✓
+
+9. **❌ Erreurs dans les SUITES** :
+   - Si suite arithmétique/géométrique : VÉRIFIER la raison et les termes donnés
+   - Si u_n = expression : VÉRIFIER u_0, u_1 correspondent aux formules données
+
+10. **❌ Erreurs de probabilités** :
+    - VÉRIFIER que toutes les probabilités somment à 1
+    - VÉRIFIER que P(A) ∈ [0, 1] pour tout événement A
+
 **🔒 CONTRAINTES POUR MINIMISER LES ERREURS :**
 
 1. **Valeurs numériques** :
@@ -749,6 +897,12 @@ Toutes les données numériques et formules doivent être MATHÉMATIQUEMENT EXAC
 
 ---
 
+⚠️ FORMAT DE RÉPONSE ABSOLUMENT OBLIGATOIRE:
+- COMMENCE TA RÉPONSE DIRECTEMENT par le titre de l'exercice (première ligne = "{cle_exo.replace('exercice', 'Exercice')}")
+- N'ajoute AUCUN préambule avant le titre ("Voici", "Je génère", "Après analyse", etc.)
+- N'ajoute AUCUNE phrase après l'exercice ("Note:", "J'ai vérifié", "Remarque:", etc.)
+- UNIQUEMENT l'énoncé de l'exercice, rien d'autre
+
 GÉNÈRE MAINTENANT L'EXERCICE (UNIQUEMENT L'ÉNONCÉ, AUCUNE SOLUTION).
 """
 
@@ -761,13 +915,17 @@ GÉNÈRE MAINTENANT L'EXERCICE (UNIQUEMENT L'ÉNONCÉ, AUCUNE SOLUTION).
             )
 
             exercice_genere_brut = response.content[0].text.strip()
+            # ✅ Supprimer traces de raisonnement IA
+            exercice_genere_brut = _extraire_exercice_pur(exercice_genere_brut)
 
             total_tokens_input += response.usage.input_tokens
             total_tokens_output += response.usage.output_tokens
 
-            # ✅ VALIDATION MATHÉMATIQUE OBLIGATOIRE
+            # ✅ VALIDATION MATHÉMATIQUE DOUBLE : Python + IA
             print(f"   🔍 Vérification mathématique...")
-            erreurs = _detecter_erreurs_simples(exercice_genere_brut)
+            erreurs_python = _detecter_erreurs_simples(exercice_genere_brut)
+            erreurs_ia = _verifier_mathematiques_ia(exercice_genere_brut, client)
+            erreurs = erreurs_python + erreurs_ia
 
             if erreurs:
                 print(f"   ⚠️  {len(erreurs)} erreur(s) détectée(s)")
@@ -785,13 +943,17 @@ EXERCICE:
 ERREURS À CORRIGER:
 {chr(10).join([f"- {e}" for e in erreurs])}
 
-RÈGLES:
+RÈGLES STRICTES:
 1. Corrige UNIQUEMENT les erreurs listées
 2. Garde la structure, les questions, le contexte
-3. Assure-toi que les corrections sont EXACTES
+3. Assure-toi que les corrections sont EXACTES (recalcule pour vérifier)
 4. Ne change rien d'autre
 
-Réponds avec l'exercice CORRIGÉ complet (même format LaTeX).
+⚠️ FORMAT DE RÉPONSE OBLIGATOIRE:
+- COMMENCE DIRECTEMENT par le titre de l'exercice (ex: "Exercice 1")
+- N'ajoute AUCUN préambule, introduction ou commentaire
+- N'ajoute AUCUNE phrase après l'exercice (pas de "Note:", "Remarque:", etc.)
+- UNIQUEMENT l'énoncé corrigé, rien d'autre
 """
 
                 correction_response = client.messages.create(
@@ -802,6 +964,8 @@ Réponds avec l'exercice CORRIGÉ complet (même format LaTeX).
                 )
 
                 exercice_genere_brut = correction_response.content[0].text.strip()
+                # ✅ Supprimer traces IA de la correction aussi
+                exercice_genere_brut = _extraire_exercice_pur(exercice_genere_brut)
                 total_tokens_input += correction_response.usage.input_tokens
                 total_tokens_output += correction_response.usage.output_tokens
 
